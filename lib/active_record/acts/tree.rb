@@ -33,6 +33,7 @@ module ActiveRecord
       # * <tt>self_and_siblings</tt> - Returns all the children of the parent, including the current node (<tt>[subchild1, subchild2]</tt> when called on <tt>subchild1</tt>)
       # * <tt>ancestors</tt> - Returns all the ancestors of the current node (<tt>[child1, root]</tt> when called on <tt>subchild2</tt>)
       # * <tt>root</tt> - Returns the root of the current node (<tt>root</tt> when called on <tt>subchild2</tt>)
+			# * <tt>descendants</tt> - Returns a flat list of the descendants of the current node (<tt>[child1, subchild1, subchild2]</tt> when called on <tt>root</tt>)
       module ClassMethods
         # Configuration options are:
         #
@@ -90,6 +91,20 @@ module ActiveRecord
         def self_and_siblings
           parent ? parent.children : self.class.roots
         end
+
+				# Returns a flat list of the descendants of the current node.
+				#
+				#   root.descendants # => [child1, subchild1, subchild2]
+				def descendants(node=self)
+					nodes = []
+					nodes << node unless node == self
+					
+					node.children.each do |child|
+						nodes += descendants(child)
+					end
+						
+					nodes
+				end
       end
     end
   end
