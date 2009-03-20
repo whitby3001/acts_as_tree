@@ -103,7 +103,7 @@ module ActiveRecord
 						nodes += descendants(child)
 					end
 						
-					nodes
+					nodes.compact
 				end
       end
     end
