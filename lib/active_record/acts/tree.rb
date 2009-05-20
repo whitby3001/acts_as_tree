@@ -67,15 +67,13 @@ module ActiveRecord
         #   subchild1.ancestors # => [child1, root]
         def ancestors
           node, nodes = self, []
-          nodes << node = node.parent while node.parent
-          nodes
+          nodes << node = node.parent until node.parent.nil? and return nodes
         end
 
         # Returns the root node of the tree.
         def root
           node = self
-          node = node.parent while node.parent
-          node
+          node = node.parent until node.parent.nil? and return node
         end
 
         # Returns all siblings of the current node.
