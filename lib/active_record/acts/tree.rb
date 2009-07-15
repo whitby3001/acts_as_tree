@@ -57,6 +57,16 @@ module ActiveRecord
             def self.root
               find(:first, :conditions => "#{configuration[:foreign_key]} IS NULL", :order => #{configuration[:order].nil? ? "nil" : %Q{"#{configuration[:order]}"}})
             end
+
+            def self.childless
+              nodes = []
+
+              find(:all).each do |node|
+                nodes << node if node.children.empty?
+              end
+
+              nodes
+            end
           EOV
         end
       end
