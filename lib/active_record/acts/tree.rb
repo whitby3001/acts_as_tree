@@ -51,7 +51,10 @@ module ActiveRecord
             include ActiveRecord::Acts::Tree::InstanceMethods
             
             named_scope :roots, :conditions => "#{configuration[:foreign_key]} IS NULL", :order => #{configuration[:order].nil? ? "nil" : %Q{"#{configuration[:order]}"}}
-            named_scope :root, :conditions => "#{configuration[:foreign_key]} IS NULL", :order => #{configuration[:order].nil? ? "nil" : %Q{"#{configuration[:order]}"}}, :limit => 1
+
+            def self.root
+              roots.first
+            end
 
             def self.childless
               nodes = []
