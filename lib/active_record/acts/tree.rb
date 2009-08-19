@@ -33,6 +33,7 @@ module ActiveRecord
       # * <tt>self_and_siblings</tt> - Returns all the children of the parent, including the current node (<tt>[subchild1, subchild2]</tt> when called on <tt>subchild1</tt>)
       # * <tt>ancestors</tt> - Returns all the ancestors of the current node (<tt>[child1, root]</tt> when called on <tt>subchild2</tt>)
       # * <tt>root</tt> - Returns the root of the current node (<tt>root</tt> when called on <tt>subchild2</tt>)
+			# * <tt>descendants</tt> - Returns a flat list of the descendants of the current node (<tt>[child1, subchild1, subchild2]</tt> when called on <tt>root</tt>)
       module ClassMethods
         # Configuration options are:
         #
@@ -51,6 +52,16 @@ module ActiveRecord
             
             named_scope :roots, :conditions => "#{configuration[:foreign_key]} IS NULL", :order => #{configuration[:order].nil? ? "nil" : %Q{"#{configuration[:order]}"}}
             named_scope :root, :conditions => "#{configuration[:foreign_key]} IS NULL", :order => #{configuration[:order].nil? ? "nil" : %Q{"#{configuration[:order]}"}}, :limit => 1
+
+            def self.childless
+              nodes = []
+
+              find(:all).each do |node|
+                nodes << node if node.children.empty?
+              end
+
+              nodes
+            end
           EOV
         end
       end
@@ -61,15 +72,13 @@ module ActiveRecord
         #   subchild1.ancestors # => [child1, root]
         def ancestors
           node, nodes = self, []
-          nodes << node = node.parent while node.parent
-          nodes
+          nodes << node = node.parent until node.parent.nil? and return nodes
         end
 
         # Returns the root node of the tree.
         def root
           node = self
-          node = node.parent while node.parent
-          node
+          node = node.parent until node.parent.nil? and return node
         end
 
         # Returns all siblings of the current node.
@@ -85,6 +94,24 @@ module ActiveRecord
         def self_and_siblings
           parent ? parent.children : self.class.roots
         end
+
+				# Returns a flat list of the descendants of the current node.
+				#
+				#   root.descendants # => [child1, subchild1, subchild2]
+				def descendants(node=self)
+					nodes = []
+					nodes << node unless node == self
+					
+					node.children.each do |child|
+						nodes += descendants(child)
+					end
+						
+					nodes.compact
+				end
+				
+				def childless
+				  self.descendants.collect{|d| d.children.empty? ? d : nil}.compact
+				end
       end
     end
   end
