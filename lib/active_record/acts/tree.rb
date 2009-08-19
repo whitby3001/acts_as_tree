@@ -62,6 +62,16 @@ module ActiveRecord
 
               nodes
             end
+            
+            validates_each "#{configuration[:foreign_key]}" do |record, attr, value|
+              if value
+                if record.id == value
+                  record.errors.add attr, "cannot be it's own id"
+                elsif record.descendants.map {|c| c.id}.include?(value)
+                  record.errors.add attr, "cannot be a descendant's id"
+                end
+              end
+            end
           EOV
         end
       end
