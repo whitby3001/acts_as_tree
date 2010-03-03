@@ -48,6 +48,10 @@ class TreeMixin < Mixin
   acts_as_tree :foreign_key => "parent_id", :order => "id"
 end
 
+class TreeMixinWithCounterCache < Mixin
+  acts_as_tree :foreign_key => "parent_id", :order => "id", :counter_cache => :children_count
+end
+
 class TreeMixinWithoutOrder < Mixin
   acts_as_tree :foreign_key => "parent_id"
 end
@@ -164,6 +168,34 @@ class TreeTest < Test::Unit::TestCase
   end
   
 end
+
+class TreeTestWithCounterCache < Test::Unit::TestCase
+  def setup
+    teardown_db
+    setup_db
+    @root = TreeMixinWithCounterCache.create!
+    @child1 = TreeMixinWithCounterCache.create! :parent_id => @root.id
+    @child1_child1 = TreeMixinWithCounterCache.create! :parent_id => @child1.id
+    @child2 = TreeMixinWithCounterCache.create! :parent_id => @root.id
+  end
+  
+  def teardown
+    teardown_db
+  end
+  
+  def test_counter_cache
+    assert_equal 2, @root.reload.children_count
+    assert_equal 1, @child1.reload.children_count
+  end
+  
+  def test_update_parents_counter_cache
+    @child1_child1.update_attributes(:parent_id => @root.id)
+    assert_equal 3, @root.reload.children_count
+    assert_equal 0, @child1.reload.children_count
+  end
+  
+end
+
 
 class TreeTestWithEagerLoading < Test::Unit::TestCase
   

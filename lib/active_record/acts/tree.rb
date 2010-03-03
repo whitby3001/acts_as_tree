@@ -51,7 +51,9 @@ module ActiveRecord
             include ActiveRecord::Acts::Tree::InstanceMethods
             
             named_scope :roots, :conditions => "#{configuration[:foreign_key]} IS NULL", :order => #{configuration[:order].nil? ? "nil" : %Q{"#{configuration[:order]}"}}
-
+            
+            after_update :update_parents_counter_cache
+            
             def self.root
               roots.first
             end
@@ -124,6 +126,15 @@ module ActiveRecord
         
         def childless
           self.descendants.collect{|d| d.children.empty? ? d : nil}.compact
+        end
+
+      private
+      
+        def update_parents_counter_cache
+          if self.respond_to?(:children_count) && parent_id_changed?
+            self.class.decrement_counter(:children_count, parent_id_was)
+            self.class.increment_counter(:children_count, parent_id)
+          end
         end
       end
     end
