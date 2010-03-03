@@ -19,7 +19,7 @@ class Test::Unit::TestCase
   end
 end
 
-ActiveRecord::Base.establish_connection(:adapter => "sqlite3", :dbfile => ":memory:")
+ActiveRecord::Base.establish_connection(:adapter => "sqlite3", :database => ":memory:")
 
 # AR keeps printing annoying schema statements
 $stdout = StringIO.new
@@ -30,6 +30,7 @@ def setup_db
     create_table :mixins do |t|
       t.column :type, :string
       t.column :parent_id, :integer
+      t.column :children_count, :integer, :default => 0
     end
   end
 end
@@ -77,10 +78,10 @@ class TreeTest < Test::Unit::TestCase
   end
 
   def test_children
-    assert_equal @root1.children, [@root_child1, @root_child2]
-    assert_equal @root_child1.children, [@child1_child]
-    assert_equal @child1_child.children, []
-    assert_equal @root_child2.children, []
+    assert_equal @root1.reload.children, [@root_child1, @root_child2]
+    assert_equal @root_child1.reload.children, [@child1_child]
+    assert_equal @child1_child.reload.children, []
+    assert_equal @root_child2.reload.children, []
   end
 
   def test_parent
@@ -115,7 +116,7 @@ class TreeTest < Test::Unit::TestCase
 
     assert_equal @extra.parent, @root1
 
-    assert_equal 3, @root1.children.size
+    assert_equal 3, @root1.reload.children.count
     assert @root1.children.include?(@extra)
     assert @root1.children.include?(@root_child1)
     assert @root1.children.include?(@root_child2)
@@ -160,7 +161,8 @@ class TreeTest < Test::Unit::TestCase
     assert_equal [@root_child1, @root_child2], @root_child2.self_and_siblings
     assert_equal [@root1, @root2, @root3], @root2.self_and_siblings
     assert_equal [@root1, @root2, @root3], @root3.self_and_siblings
-  end           
+  end
+  
 end
 
 class TreeTestWithEagerLoading < Test::Unit::TestCase
@@ -189,9 +191,9 @@ class TreeTestWithEagerLoading < Test::Unit::TestCase
     roots = TreeMixin.find(:all, :include => :children, :conditions => "mixins.parent_id IS NULL", :order => "mixins.id")
     assert_equal [@root1, @root2, @root3], roots                     
     assert_no_queries do
-      assert_equal 2, roots[0].children.size
-      assert_equal 0, roots[1].children.size
-      assert_equal 0, roots[2].children.size
+      assert_equal 2, roots[0].children.count
+      assert_equal 0, roots[1].children.count
+      assert_equal 0, roots[2].children.count
     end   
   end
   
