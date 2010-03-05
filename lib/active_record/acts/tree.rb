@@ -50,11 +50,19 @@ module ActiveRecord
           }
           configuration.update(options) if options.is_a?(Hash)
           
-          belongs_to :parent,
-                     :class_name => name,
-                     :foreign_key => configuration[:foreign_key],
-                     :counter_cache => configuration[:counter_cache],
-                     :touch => configuration[:touch]
+          # facebooker seems unhappy with :touch
+          if configuration[:touch]
+            belongs_to :parent,
+                       :class_name => name,
+                       :foreign_key => configuration[:foreign_key],
+                       :counter_cache => configuration[:counter_cache],
+                       :touch => configuration[:touch]
+          else
+            belongs_to :parent,
+                       :class_name => name,
+                       :foreign_key => configuration[:foreign_key],
+                       :counter_cache => configuration[:counter_cache]
+          end
           
           has_many :children,
                    :class_name => name,
