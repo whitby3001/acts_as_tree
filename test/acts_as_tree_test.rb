@@ -168,6 +168,10 @@ class TreeTest < Test::Unit::TestCase
     assert_equal [@root1, @root2, @root3], @root3.self_and_siblings
   end
   
+  def test_root
+    assert_equal true, @root1.root?
+    assert_equal false, @child1_child.root?
+  end
 end
 
 class TreeTestWithCounterCache < Test::Unit::TestCase

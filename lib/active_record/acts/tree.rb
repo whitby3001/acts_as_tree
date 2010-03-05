@@ -116,6 +116,10 @@ module ActiveRecord
           nodes << node = node.parent until node.parent.nil? and return nodes
         end
         
+        def root?
+          parent == nil
+        end
+        
         # Returns the root node of the tree.
         def root
           node = self
