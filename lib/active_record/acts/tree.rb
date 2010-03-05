@@ -41,30 +41,48 @@ module ActiveRecord
         # * <tt>order</tt> - makes it possible to sort the children according to this SQL snippet.
         # * <tt>counter_cache</tt> - keeps a count in a +children_count+ column if set to +true+ (default: +false+).
         def acts_as_tree(options = {})
-          configuration = { :foreign_key => "parent_id", :order => nil, :counter_cache => nil, :dependent => :destroy, :touch => false }
+          configuration = {
+            :foreign_key => "parent_id",
+            :order => nil,
+            :counter_cache => nil,
+            :dependent => :destroy,
+            :touch => false
+          }
           configuration.update(options) if options.is_a?(Hash)
-
-          belongs_to :parent, :class_name => name, :foreign_key => configuration[:foreign_key], :counter_cache => configuration[:counter_cache], :touch => configuration[:touch]
-          has_many :children, :class_name => name, :foreign_key => configuration[:foreign_key], :order => configuration[:order], :dependent => configuration[:dependent]
-
+          
+          belongs_to :parent,
+                     :class_name => name,
+                     :foreign_key => configuration[:foreign_key],
+                     :counter_cache => configuration[:counter_cache],
+                     :touch => configuration[:touch]
+          
+          has_many :children,
+                   :class_name => name,
+                   :foreign_key => configuration[:foreign_key],
+                   :order => configuration[:order],
+                   :dependent => configuration[:dependent]
+          
           class_eval <<-EOV
             include ActiveRecord::Acts::Tree::InstanceMethods
             
-            named_scope :roots, :conditions => "#{configuration[:foreign_key]} IS NULL", :order => #{configuration[:order].nil? ? "nil" : %Q{"#{configuration[:order]}"}}
+            named_scope :roots,
+                        :conditions => "#{configuration[:foreign_key]} IS NULL",
+                        :order => #{configuration[:order].nil? ? "nil" : %Q{"#{configuration[:order]}"}}
             
+            after_save :update_level_cache
             after_update :update_parents_counter_cache
             
             def self.root
               roots.first
             end
-
+            
             def self.childless
               nodes = []
-
+              
               find(:all).each do |node|
                 nodes << node if node.children.empty?
               end
-
+              
               nodes
             end
             
@@ -80,7 +98,7 @@ module ActiveRecord
           EOV
         end
       end
-
+      
       module InstanceMethods
         # Returns list of ancestors, starting from parent until root.
         #
@@ -89,27 +107,27 @@ module ActiveRecord
           node, nodes = self, []
           nodes << node = node.parent until node.parent.nil? and return nodes
         end
-
+        
         # Returns the root node of the tree.
         def root
           node = self
           node = node.parent until node.parent.nil? and return node
         end
-
+        
         # Returns all siblings of the current node.
         #
         #   subchild1.siblings # => [subchild2]
         def siblings
           self_and_siblings - [self]
         end
-
+        
         # Returns all siblings and a reference to the current node.
         #
         #   subchild1.self_and_siblings # => [subchild1, subchild2]
         def self_and_siblings
           parent ? parent.children : self.class.roots
         end
-
+        
         # Returns a flat list of the descendants of the current node.
         #
         #   root.descendants # => [child1, subchild1, subchild2]
@@ -127,13 +145,23 @@ module ActiveRecord
         def childless
           self.descendants.collect{|d| d.children.empty? ? d : nil}.compact
         end
-
-      private
-      
+        
+        private
+        
         def update_parents_counter_cache
           if self.respond_to?(:children_count) && parent_id_changed?
             self.class.decrement_counter(:children_count, parent_id_was)
             self.class.increment_counter(:children_count, parent_id)
+          end
+        end
+        
+        def update_level_cache
+          if respond_to?(:level_cache) && parent_id_changed?
+            _level_cache = ancestors.length
+            
+            if level_cache != _level_cache
+              self.class.update_all("level_cache = #{_level_cache}", ['id = ?', id])
+            end
           end
         end
       end
