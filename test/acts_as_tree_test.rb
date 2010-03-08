@@ -172,6 +172,11 @@ class TreeTest < Test::Unit::TestCase
     assert_equal true, @root1.root?
     assert_equal false, @child1_child.root?
   end
+  
+  def test_leaf
+    assert_equal false, @root1.leaf?
+    assert_equal true, @child1_child.leaf?
+  end
 end
 
 class TreeTestWithCounterCache < Test::Unit::TestCase

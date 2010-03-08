@@ -120,6 +120,10 @@ module ActiveRecord
           parent == nil
         end
         
+        def leaf?
+          children.length == 0
+        end
+        
         # Returns the root node of the tree.
         def root
           node = self
