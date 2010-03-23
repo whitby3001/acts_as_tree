@@ -73,7 +73,7 @@ module ActiveRecord
           class_eval <<-EOV
             include ActiveRecord::Acts::Tree::InstanceMethods
             
-            named_scope :roots,
+            scope       :roots,
                         :conditions => "#{configuration[:foreign_key]} IS NULL",
                         :order => #{configuration[:order].nil? ? "nil" : %Q{"#{configuration[:order]}"}}
             
