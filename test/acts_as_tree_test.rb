@@ -146,7 +146,15 @@ class TreeTest < Test::Unit::TestCase
     assert_equal [@root_child1, @root_child2], @root_child2.self_and_siblings
     assert_equal [@root1, @root2, @root3], @root2.self_and_siblings
     assert_equal [@root1, @root2, @root3], @root3.self_and_siblings
-  end           
+  end
+  
+  def test_descendants
+    assert_equal [@root_child1, @child1_child, @root_child2], @root.descendents
+  end
+  
+  def test_family_members
+    assert_equal [@root1, @root_child1, @root_child2], @child1_child.family_members
+  end
 end
 
 class TreeTestWithEagerLoading < Test::Unit::TestCase

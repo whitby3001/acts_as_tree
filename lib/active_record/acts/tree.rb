@@ -90,6 +90,32 @@ module ActiveRecord
         def self_and_siblings
           parent ? parent.children : self.class.roots
         end
+
+        # Returns all children down the tree until there are no more children left
+        #
+        #   parent.descendants # => [descendant1, descendand2]
+        def descendants
+          des = []
+          self.children.each{ |c| 
+            des.concat([c])
+            des.concat(c.descendants) 
+          }
+          return des
+        end
+
+        # Returns all descendants of the root
+        #
+        #   child.parent.family_members # => [child, descendent2, descendent3]
+        def family_members
+          fm = []
+          self.root.children.each{ |c| 
+            fm.concat([c])
+            fm.concat(c.descendants) 
+          }
+          fms = [self.root].concat(fm)
+          fms.delete(self)
+          return fms
+        end
       end
     end
   end
