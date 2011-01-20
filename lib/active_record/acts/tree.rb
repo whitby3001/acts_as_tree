@@ -117,6 +117,14 @@ module ActiveRecord
           fms.delete(self)
           return fms
         end
+        
+        # Returns all children of the node and all roots, but removes the current node and it's root
+        def children_and_roots
+          available = children + self.class.roots
+          available.delete(self)
+          available.delete(root)
+          return available
+        end
       end
     end
   end
