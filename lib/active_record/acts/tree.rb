@@ -162,6 +162,28 @@ module ActiveRecord
           self.descendants.collect{|d| d.children.empty? ? d : nil}.compact
         end
         
+        # Returns all descendants of the root
+        #
+        #   child.parent.family_members # => [child, descendent2, descendent3]
+        def family_members
+          fm = []
+          self.root.children.each{ |c| 
+            fm.concat([c])
+            fm.concat(c.descendants) 
+          }
+          fms = [self.root].concat(fm)
+          fms.delete(self)
+          return fms
+        end
+
+        # Returns all children of the node and all roots, but removes the current node and it's root
+        def children_and_roots(klass = self.class)
+          available = children + klass.roots
+          available.delete(self)
+          available.delete(root)
+          return available
+        end
+        
         private
         
         def update_parents_counter_cache
